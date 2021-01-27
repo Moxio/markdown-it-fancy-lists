@@ -229,7 +229,7 @@ type Marker = {
 
 function areMarkersCompatible(previousMarker: Marker, currentMarker: Marker) {
 	return previousMarker.isOrdered === currentMarker.isOrdered
-		&& (previousMarker.type === currentMarker.type || previousMarker.type === "0" && currentMarker.type === "#")
+		&& (previousMarker.type === currentMarker.type || currentMarker.type === "#")
 		&& previousMarker.delimiter === currentMarker.delimiter;
 }
 

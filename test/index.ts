@@ -196,6 +196,38 @@ VVII. baz</p>
 		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
 	});
 
+	it("supports hash as list marker for subsequent roman numeric marker", async () => {
+		const markdown = `
+i. foo
+#. bar
+#. baz
+`;
+		const expectedHtml = `
+<ol type="i">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+	});
+
+	it("supports hash as list marker for subsequent alphanumeric marker", async () => {
+		const markdown = `
+a. foo
+#. bar
+#. baz
+`;
+		const expectedHtml = `
+<ol type="a">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+	});
+
 	it("supports hash as list marker for initial item", async () => {
 		const markdown = `
 #. foo
