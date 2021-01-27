@@ -2,7 +2,7 @@
 	"name": "markdown-it-fancy-lists",
 	"version": "1.0.0",
 	"description": "Extension for markdown-it to support additional numbering types for ordered lists ",
-	"keywords": [],
+	"keywords": [ "markdown-it-plugin", "markdown-it", "markdown", "commonmark", "fancy-lists", "ordered-list" ],
 	"author": {
 		"name": "Moxio",
 		"email": "info@moxio.com",
