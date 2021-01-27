@@ -10,7 +10,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Moxio/js-struct-compare.git"
+		"url": "https://github.com/Moxio/markdown-it-fancy-lists.git"
 	},
 	"license": "MIT",
 	"scripts": {
