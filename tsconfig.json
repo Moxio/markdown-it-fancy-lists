@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"rootDir": "src",
+		"declaration": true,
+		"strictNullChecks": true,
+		"skipLibCheck": true,
+		"outDir": "lib",
+		"lib": [
+			"es2018"
+		]
+	},
+	"include": [
+		"src/**/*.ts",
+	]
+}
