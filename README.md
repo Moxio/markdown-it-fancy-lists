@@ -116,6 +116,39 @@ are two small differences with Pandoc's syntax:
   interrupt a paragraph. The same holds for the "#" generic numbered
   list item marker.
 
+Configuration
+-------------
+Options can be provided as a second argument when registering the plugin:
+```javascript
+parser.use(markdownItFancyListPlugin, {
+    /* options */
+});
+```
+
+Supported configuration options:
+
+* `allowOrdinal` - Whether to allow an [ordinal indicator](https://en.wikipedia.org/wiki/Ordinal_indicator)
+  (`º`) after the numeral, as occurs in e.g. legal documents (default: `false`). If this option is enabled,
+  input like
+  ```markdown
+  1º. foo
+  2º. bar
+  3º. baz
+  ```
+  will be converted to
+  ```html
+  <ol class="ordinal">
+    <li>foo</li>
+    <li>bar</li>
+    <li>baz</li>
+  </ol>
+  ```
+  You will need [custom CSS](https://codepen.io/MoxioHD/pen/GRrjpRb) to re-insert the ordinal indicator
+  into the displayed output based on the `ordinal` class.
+
+  Because the ordinal indicator is commonly confused with other characters like the degree symbol, these
+  characters are tolerated and considered equivalent to the ordinal indicator.
+
 Versioning
 ----------
 This project adheres to [Semantic Versioning](http://semver.org/).
