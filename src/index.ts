@@ -38,7 +38,7 @@ function parseUnorderedListMarker(state: StateBlock, startLine: number): { type:
 
 // Search `^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([.)])`, returns next pos after marker on success
 // or -1 on fail.
-function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletChar: string; delimiter: ")" | "."; posAfterMarker: number } | null {
+function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletChar: string; hasOrdinalIndicator: boolean, delimiter: ")" | "."; posAfterMarker: number } | null {
 	const start = state.bMarks[startLine] + state.tShift[startLine];
 	const max = state.eMarks[startLine];
 
@@ -49,7 +49,7 @@ function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletC
 
 	const stringContainingNumberAndMarker = state.src.substring(start, Math.min(max, start + 10));
 
-	const match = /^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([.)])/.exec(stringContainingNumberAndMarker);
+	const match = /^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA]?)([.)])/.exec(stringContainingNumberAndMarker);
 	if (match === null) {
 		return null;
 	}
@@ -76,7 +76,8 @@ function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletC
 
 	return {
 		bulletChar: match[1],
-		delimiter: match[2] as ")" | ".",
+		hasOrdinalIndicator: match[2] !== "",
+		delimiter: match[3] as ")" | ".",
 		posAfterMarker: finalPos,
 	};
 }
@@ -205,6 +206,7 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 			isRoman: false,
 			isAlpha: false,
 			bulletChar: "",
+			hasOrdinalIndicator: false,
 			delimiter: ")",
 			start: 1,
 			...unorderedListMarker,
@@ -221,6 +223,7 @@ type Marker = {
 	isAlpha: boolean;
 	type: MarkerType;
 	bulletChar: string;
+	hasOrdinalIndicator: boolean;
 	delimiter: ")" | ".";
 	start: number;
 	posAfterMarker: number;
@@ -268,6 +271,9 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 		if (marker === null) {
 			return false;
 		}
+		if (marker.hasOrdinalIndicator === true && options.allowOrdinal !== true) {
+			return false;
+		}
 		const posAfterMarker = marker.bulletChar.length + 2;
 
 		// do not allow subsequent numbers to interrupt paragraphs
@@ -299,6 +305,9 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 			}
 			if (marker.start !== 1) {
 				attrs.push([ "start", marker.start.toString(10) ]);
+			}
+			if (marker.hasOrdinalIndicator === true) {
+				attrs.push([ "class", "ordinal" ]);
 			}
 			token.attrs = attrs;
 
@@ -467,7 +476,9 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 	};
 }
 
-export type MarkdownItFancyListPluginOptions = {};
+export type MarkdownItFancyListPluginOptions = {
+	allowOrdinal?: boolean;
+};
 
 export const markdownItFancyListPlugin = (markdownIt: MarkdownIt, options?: MarkdownItFancyListPluginOptions): void => {
 	markdownIt.block.ruler.at("list", createFancyList(options ?? {}), { alt: [ "paragraph", "reference", "blockquote" ] });

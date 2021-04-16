@@ -452,4 +452,56 @@ C.  bar
 `;
 		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
 	});
+
+	describe("support for ordinal indicator", () => {
+		it("does not support an ordinal indicator by default", async () => {
+			const markdown = `
+1º. foo
+2º. bar
+3º. baz
+`;
+			const expectedHtml = `
+<p>1&#xBA;. foo
+2&#xBA;. bar
+3&#xBA;. baz</p>
+`;
+			await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		});
+
+		it("supports an ordinal indicator if enabled in options", async () => {
+			const markdown = `
+1º. foo
+2º. bar
+3º. baz
+`;
+			const expectedHtml = `
+<ol class="ordinal">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+				allowOrdinal: true,
+			});
+		});
+
+		it("allows ordinal indicators with Roman numerals", async () => {
+			const markdown = `
+IIº. foo
+IIIº. bar
+IVº. baz
+`;
+			const expectedHtml = `
+<ol type="I" start="2" class="ordinal">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+				allowOrdinal: true,
+			});
+		});
+	});
 });
