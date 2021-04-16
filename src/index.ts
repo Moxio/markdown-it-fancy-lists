@@ -232,7 +232,8 @@ type Marker = {
 function areMarkersCompatible(previousMarker: Marker, currentMarker: Marker) {
 	return previousMarker.isOrdered === currentMarker.isOrdered
 		&& (previousMarker.type === currentMarker.type || currentMarker.type === "#")
-		&& previousMarker.delimiter === currentMarker.delimiter;
+		&& previousMarker.delimiter === currentMarker.delimiter
+		&& previousMarker.hasOrdinalIndicator === currentMarker.hasOrdinalIndicator;
 }
 
 const createFancyList = (options: MarkdownItFancyListPluginOptions) => {

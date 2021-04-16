@@ -503,5 +503,29 @@ IVº. baz
 				allowOrdinal: true,
 			});
 		});
+
+		it("starts a new list when ordinal indicators are introduced or omitted", async () => {
+			const markdown = `
+1) First
+1º) First again
+2º) Second
+1) Another first
+`;
+			const expectedHtml = `
+<ol>
+  <li>First</li>
+</ol>
+<ol class="ordinal">
+  <li>First again</li>
+  <li>Second</li>
+</ol>
+<ol>
+  <li>Another first</li>
+</ol>
+`;
+			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+				allowOrdinal: true,
+			});
+		});
 	});
 });
