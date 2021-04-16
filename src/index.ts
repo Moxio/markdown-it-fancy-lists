@@ -36,7 +36,7 @@ function parseUnorderedListMarker(state: StateBlock, startLine: number): { type:
 	};
 }
 
-// Search `^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([.)])`, returns next pos after marker on success
+// Search `^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])`, returns next pos after marker on success
 // or -1 on fail.
 function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletChar: string; hasOrdinalIndicator: boolean, delimiter: ")" | "."; posAfterMarker: number } | null {
 	const start = state.bMarks[startLine] + state.tShift[startLine];
@@ -49,7 +49,7 @@ function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletC
 
 	const stringContainingNumberAndMarker = state.src.substring(start, Math.min(max, start + 10));
 
-	const match = /^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA]?)([.)])/.exec(stringContainingNumberAndMarker);
+	const match = /^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])/.exec(stringContainingNumberAndMarker);
 	if (match === null) {
 		return null;
 	}

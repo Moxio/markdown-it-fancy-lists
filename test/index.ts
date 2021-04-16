@@ -527,5 +527,25 @@ IVº. baz
 				allowOrdinal: true,
 			});
 		});
+
+		it("tolerates characters commonly mistaken for ordinal indicators", async () => {
+			const markdown = `
+1°. degree sign
+2˚. ring above
+3ᵒ. modifier letter small o
+4º. ordinal indicator
+`;
+			const expectedHtml = `
+<ol class="ordinal">
+  <li>degree sign</li>
+  <li>ring above</li>
+  <li>modifier letter small o</li>
+  <li>ordinal indicator</li>
+</ol>
+`;
+			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+				allowOrdinal: true,
+			});
+		});
 	});
 });
