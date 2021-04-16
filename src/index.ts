@@ -4,7 +4,6 @@ import * as Token from "markdown-it/lib/token";
 import { toArabic } from "roman-numerals";
 import * as MarkdownIt from "markdown-it";
 
-
 // Search `[-+*][\n ]`, returns next pos after marker on success
 // or -1 on fail.
 function parseUnorderedListMarker(state: StateBlock, startLine: number): { type: "*" | "-" | "+"; posAfterMarker: number } | null {
@@ -233,239 +232,243 @@ function areMarkersCompatible(previousMarker: Marker, currentMarker: Marker) {
 		&& previousMarker.delimiter === currentMarker.delimiter;
 }
 
-const fancyList = (state: StateBlock, startLine: number, endLine: number, silent: boolean): boolean => {
-
-	// if it's indented more than 3 spaces, it should be a code block
-	if (state.sCount[startLine] - state.blkIndent >= 4) { return false; }
-
-	// Special case:
-	//  - item 1
-	//   - item 2
-	//    - item 3
-	//     - item 4
-	//      - this one is a paragraph continuation
-	if (state.listIndent >= 0 &&
-		state.sCount[startLine] - state.listIndent >= 4 &&
-		state.sCount[startLine] < state.blkIndent) {
-		return false;
-	}
-
-	let isTerminatingParagraph = false;
-	// limit conditions when list can interrupt
-	// a paragraph (validation mode only)
-	if (silent && state.parentType === "paragraph") {
-		// Next list item should still terminate previous list item;
-		//
-		// This code can fail if plugins use blkIndent as well as lists,
-		// but I hope the spec gets fixed long before that happens.
-		//
-		if (state.tShift[startLine] >= state.blkIndent) {
-			isTerminatingParagraph = true;
-		}
-	}
-
-	let marker: Marker | null = analyseMarker(state, startLine, endLine, null);
-	if (marker === null) {
-		return false;
-	}
-	const posAfterMarker = marker.bulletChar.length + 2;
-
-	// do not allow subsequent numbers to interrupt paragraphs
-	if (isTerminatingParagraph && marker.start !== 1) {
-		return false;
-	}
-
-	// If we're starting a new unordered list right after
-	// a paragraph, first line should not be empty.
-	if (isTerminatingParagraph) {
-		if (state.skipSpaces(posAfterMarker) >= state.eMarks[startLine]) return false;
-	}
-
-	// We should terminate list on style change. Remember first one to compare.
-	const markerCharCode = state.src.charCodeAt(posAfterMarker - 1);
-
-	// For validation mode we can terminate immediately
-	if (silent) { return true; }
-
-	// Start list
-	const listTokIdx = state.tokens.length;
-
-	let token: Token;
-	if (marker.isOrdered === true) {
-		token = state.push("ordered_list_open", "ol", 1);
-		const attrs: [ string, string ][] = [];
-		if (marker.type !== "0" && marker.type !== "#") {
-			attrs.push([ "type", marker.type ]);
-		}
-		if (marker.start !== 1) {
-			attrs.push([ "start", marker.start.toString(10) ]);
-		}
-		token.attrs = attrs;
-
-	} else {
-		token = state.push("bullet_list_open", "ul", 1);
-	}
-
-	const listLines: [ number, number ] = [ startLine, 0 ];
-	token.map = listLines;
-	token.markup = String.fromCharCode(markerCharCode);
-
-	//
-	// Iterate list items
-	//
-
-	let nextLine = startLine;
-	let prevEmptyEnd = false;
-	const terminatorRules = state.md.block.ruler.getRules("list");
-
-	const oldParentType = state.parentType;
-	state.parentType = "list";
-
-	let tight = true;
-	while (nextLine < endLine) {
-		const nextMarker = analyseMarker(state, nextLine, endLine, marker);
-		if (nextMarker === null || areMarkersCompatible(marker, nextMarker) === false) {
-			break;
-		}
-		let pos: number = nextMarker.posAfterMarker;
-		const max = state.eMarks[nextLine];
-
-		const initial = state.sCount[nextLine] + pos - (state.bMarks[startLine] + state.tShift[startLine]);
-		let offset = initial;
-
-		while (pos < max) {
-			const ch = state.src.charCodeAt(pos);
-
-			if (ch === 0x09) {
-				offset += 4 - (offset + state.bsCount[nextLine]) % 4;
-			} else if (ch === 0x20) {
-				offset += 1;
-			} else {
-				break;
-			}
-
-			pos += 1;
-		}
-
-		let contentStart = pos;
-
-		let indentAfterMarker: number;
-		if (contentStart >= max) {
-			// trimming space in "-    \n  3" case, indent is 1 here
-			indentAfterMarker = 1;
-		} else {
-			indentAfterMarker = offset - initial;
-		}
-
-		// If we have more than 4 spaces, the indent is 1
-		// (the rest is just indented code block)
-		if (indentAfterMarker > 4) { indentAfterMarker = 1; }
-
-		// "  -  test"
-		//  ^^^^^ - calculating total length of this thing
-		const indent = initial + indentAfterMarker;
-
-		// Run subparser & write tokens
-		token = state.push("list_item_open", "li", 1);
-		token.markup = String.fromCharCode(markerCharCode);
-		const itemLines = [ startLine, 0 ] as [ number, number ];
-		token.map = itemLines;
-
-		// change current state, then restore it after parser subcall
-		const oldTight = state.tight;
-		const oldTShift = state.tShift[startLine];
-		const oldSCount = state.sCount[startLine];
-
-		//  - example list
-		// ^ listIndent position will be here
-		//   ^ blkIndent position will be here
-		//
-		const oldListIndent = state.listIndent;
-		state.listIndent = state.blkIndent;
-		state.blkIndent = indent;
-
-		state.tight = true;
-		state.tShift[startLine] = contentStart - state.bMarks[startLine];
-		state.sCount[startLine] = offset;
-
-		if (contentStart >= max && state.isEmpty(startLine + 1)) {
-			// workaround for this case
-			// (list item is empty, list terminates before "foo"):
-			// ~~~~~~~~
-			//   -
-			//
-			//     foo
-			// ~~~~~~~~
-			state.line = Math.min(state.line + 2, endLine);
-		} else {
-			state.md.block.tokenize(state, startLine, endLine);
-		}
-
-		// If any of list item is tight, mark list as tight
-		if (!state.tight || prevEmptyEnd) {
-			tight = false;
-		}
-		// Item become loose if finish with empty line,
-		// but we should filter last element, because it means list finish
-		prevEmptyEnd = (state.line - startLine) > 1 && state.isEmpty(state.line - 1);
-
-		state.blkIndent = state.listIndent;
-		state.listIndent = oldListIndent;
-		state.tShift[startLine] = oldTShift;
-		state.sCount[startLine] = oldSCount;
-		state.tight = oldTight;
-
-		token        = state.push("list_item_close", "li", -1);
-		token.markup = String.fromCharCode(markerCharCode);
-
-		nextLine = startLine = state.line;
-		itemLines[1] = nextLine;
-		contentStart = state.bMarks[startLine];
-
-		if (nextLine >= endLine) { break; }
-
-		//
-		// Try to check if list is terminated or continued.
-		//
-		if (state.sCount[nextLine] < state.blkIndent) { break; }
+const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
+	return (state: StateBlock, startLine: number, endLine: number, silent: boolean): boolean => {
 
 		// if it's indented more than 3 spaces, it should be a code block
-		if (state.sCount[startLine] - state.blkIndent >= 4) { break; }
+		if (state.sCount[startLine] - state.blkIndent >= 4) { return false; }
 
-		// fail if terminating block found
-		let terminate = false;
-		for (let i = 0, l = terminatorRules.length; i < l; i += 1) {
-			if (terminatorRules[i](state, nextLine, endLine, true)) {
-				terminate = true;
-				break;
+		// Special case:
+		//  - item 1
+		//   - item 2
+		//    - item 3
+		//     - item 4
+		//      - this one is a paragraph continuation
+		if (state.listIndent >= 0 &&
+			state.sCount[startLine] - state.listIndent >= 4 &&
+			state.sCount[startLine] < state.blkIndent) {
+			return false;
+		}
+
+		let isTerminatingParagraph = false;
+		// limit conditions when list can interrupt
+		// a paragraph (validation mode only)
+		if (silent && state.parentType === "paragraph") {
+			// Next list item should still terminate previous list item;
+			//
+			// This code can fail if plugins use blkIndent as well as lists,
+			// but I hope the spec gets fixed long before that happens.
+			//
+			if (state.tShift[startLine] >= state.blkIndent) {
+				isTerminatingParagraph = true;
 			}
 		}
-		if (terminate) { break; }
 
-		marker = nextMarker;
-	}
+		let marker: Marker | null = analyseMarker(state, startLine, endLine, null);
+		if (marker === null) {
+			return false;
+		}
+		const posAfterMarker = marker.bulletChar.length + 2;
 
-	// Finalize list
-	if (marker.isOrdered) {
-		token = state.push("ordered_list_close", "ol", -1);
-	} else {
-		token = state.push("bullet_list_close", "ul", -1);
-	}
-	token.markup = String.fromCharCode(markerCharCode);
+		// do not allow subsequent numbers to interrupt paragraphs
+		if (isTerminatingParagraph && marker.start !== 1) {
+			return false;
+		}
 
-	listLines[1] = nextLine;
-	state.line = nextLine;
+		// If we're starting a new unordered list right after
+		// a paragraph, first line should not be empty.
+		if (isTerminatingParagraph) {
+			if (state.skipSpaces(posAfterMarker) >= state.eMarks[startLine]) return false;
+		}
 
-	state.parentType = oldParentType;
+		// We should terminate list on style change. Remember first one to compare.
+		const markerCharCode = state.src.charCodeAt(posAfterMarker - 1);
 
-	// mark paragraphs tight if needed
-	if (tight) {
-		markTightParagraphs(state, listTokIdx);
-	}
+		// For validation mode we can terminate immediately
+		if (silent) { return true; }
 
-	return true;
-};
+		// Start list
+		const listTokIdx = state.tokens.length;
 
-export const markdownItFancyListPlugin = (markdownIt: MarkdownIt): void => {
-	markdownIt.block.ruler.at("list", fancyList, { alt: [ "paragraph", "reference", "blockquote" ] });
+		let token: Token;
+		if (marker.isOrdered === true) {
+			token = state.push("ordered_list_open", "ol", 1);
+			const attrs: [ string, string ][] = [];
+			if (marker.type !== "0" && marker.type !== "#") {
+				attrs.push([ "type", marker.type ]);
+			}
+			if (marker.start !== 1) {
+				attrs.push([ "start", marker.start.toString(10) ]);
+			}
+			token.attrs = attrs;
+
+		} else {
+			token = state.push("bullet_list_open", "ul", 1);
+		}
+
+		const listLines: [ number, number ] = [ startLine, 0 ];
+		token.map = listLines;
+		token.markup = String.fromCharCode(markerCharCode);
+
+		//
+		// Iterate list items
+		//
+
+		let nextLine = startLine;
+		let prevEmptyEnd = false;
+		const terminatorRules = state.md.block.ruler.getRules("list");
+
+		const oldParentType = state.parentType;
+		state.parentType = "list";
+
+		let tight = true;
+		while (nextLine < endLine) {
+			const nextMarker = analyseMarker(state, nextLine, endLine, marker);
+			if (nextMarker === null || areMarkersCompatible(marker, nextMarker) === false) {
+				break;
+			}
+			let pos: number = nextMarker.posAfterMarker;
+			const max = state.eMarks[nextLine];
+
+			const initial = state.sCount[nextLine] + pos - (state.bMarks[startLine] + state.tShift[startLine]);
+			let offset = initial;
+
+			while (pos < max) {
+				const ch = state.src.charCodeAt(pos);
+
+				if (ch === 0x09) {
+					offset += 4 - (offset + state.bsCount[nextLine]) % 4;
+				} else if (ch === 0x20) {
+					offset += 1;
+				} else {
+					break;
+				}
+
+				pos += 1;
+			}
+
+			let contentStart = pos;
+
+			let indentAfterMarker: number;
+			if (contentStart >= max) {
+				// trimming space in "-    \n  3" case, indent is 1 here
+				indentAfterMarker = 1;
+			} else {
+				indentAfterMarker = offset - initial;
+			}
+
+			// If we have more than 4 spaces, the indent is 1
+			// (the rest is just indented code block)
+			if (indentAfterMarker > 4) { indentAfterMarker = 1; }
+
+			// "  -  test"
+			//  ^^^^^ - calculating total length of this thing
+			const indent = initial + indentAfterMarker;
+
+			// Run subparser & write tokens
+			token = state.push("list_item_open", "li", 1);
+			token.markup = String.fromCharCode(markerCharCode);
+			const itemLines = [ startLine, 0 ] as [ number, number ];
+			token.map = itemLines;
+
+			// change current state, then restore it after parser subcall
+			const oldTight = state.tight;
+			const oldTShift = state.tShift[startLine];
+			const oldSCount = state.sCount[startLine];
+
+			//  - example list
+			// ^ listIndent position will be here
+			//   ^ blkIndent position will be here
+			//
+			const oldListIndent = state.listIndent;
+			state.listIndent = state.blkIndent;
+			state.blkIndent = indent;
+
+			state.tight = true;
+			state.tShift[startLine] = contentStart - state.bMarks[startLine];
+			state.sCount[startLine] = offset;
+
+			if (contentStart >= max && state.isEmpty(startLine + 1)) {
+				// workaround for this case
+				// (list item is empty, list terminates before "foo"):
+				// ~~~~~~~~
+				//   -
+				//
+				//     foo
+				// ~~~~~~~~
+				state.line = Math.min(state.line + 2, endLine);
+			} else {
+				state.md.block.tokenize(state, startLine, endLine);
+			}
+
+			// If any of list item is tight, mark list as tight
+			if (!state.tight || prevEmptyEnd) {
+				tight = false;
+			}
+			// Item become loose if finish with empty line,
+			// but we should filter last element, because it means list finish
+			prevEmptyEnd = (state.line - startLine) > 1 && state.isEmpty(state.line - 1);
+
+			state.blkIndent = state.listIndent;
+			state.listIndent = oldListIndent;
+			state.tShift[startLine] = oldTShift;
+			state.sCount[startLine] = oldSCount;
+			state.tight = oldTight;
+
+			token        = state.push("list_item_close", "li", -1);
+			token.markup = String.fromCharCode(markerCharCode);
+
+			nextLine = startLine = state.line;
+			itemLines[1] = nextLine;
+			contentStart = state.bMarks[startLine];
+
+			if (nextLine >= endLine) { break; }
+
+			//
+			// Try to check if list is terminated or continued.
+			//
+			if (state.sCount[nextLine] < state.blkIndent) { break; }
+
+			// if it's indented more than 3 spaces, it should be a code block
+			if (state.sCount[startLine] - state.blkIndent >= 4) { break; }
+
+			// fail if terminating block found
+			let terminate = false;
+			for (let i = 0, l = terminatorRules.length; i < l; i += 1) {
+				if (terminatorRules[i](state, nextLine, endLine, true)) {
+					terminate = true;
+					break;
+				}
+			}
+			if (terminate) { break; }
+
+			marker = nextMarker;
+		}
+
+		// Finalize list
+		if (marker.isOrdered) {
+			token = state.push("ordered_list_close", "ol", -1);
+		} else {
+			token = state.push("bullet_list_close", "ul", -1);
+		}
+		token.markup = String.fromCharCode(markerCharCode);
+
+		listLines[1] = nextLine;
+		state.line = nextLine;
+
+		state.parentType = oldParentType;
+
+		// mark paragraphs tight if needed
+		if (tight) {
+			markTightParagraphs(state, listTokIdx);
+		}
+
+		return true;
+	};
+}
+
+export type MarkdownItFancyListPluginOptions = {};
+
+export const markdownItFancyListPlugin = (markdownIt: MarkdownIt, options?: MarkdownItFancyListPluginOptions): void => {
+	markdownIt.block.ruler.at("list", createFancyList(options ?? {}), { alt: [ "paragraph", "reference", "blockquote" ] });
 };

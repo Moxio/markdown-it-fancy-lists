@@ -1,15 +1,14 @@
 import * as MarkdownIt from "markdown-it";
-import { markdownItFancyListPlugin } from "../src/index";
+import { markdownItFancyListPlugin, MarkdownItFancyListPluginOptions } from "../src/index";
 import { assert } from "chai";
 import { HtmlDiffer } from "@markedjs/html-differ";
 
 
-const assertMarkdownIsConvertedTo = async (expectedHtml: string, markdown: string) => {
-
+const assertMarkdownIsConvertedTo = async (expectedHtml: string, markdown: string, pluginOptions?: MarkdownItFancyListPluginOptions) => {
 	const markdownConverter = new MarkdownIt("default", {
 		"typographer": true,
 	});
-	markdownConverter.use(markdownItFancyListPlugin);
+	markdownConverter.use(markdownItFancyListPlugin, pluginOptions);
 	const actualOutput = markdownConverter.render(markdown);
 
 	const htmlDiffer = new HtmlDiffer();
