@@ -289,7 +289,7 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 		}
 
 		// We should terminate list on style change. Remember first one to compare.
-		const markerCharCode = state.src.charCodeAt(posAfterMarker - 1);
+		const markerCharCode = state.src.charCodeAt(marker.posAfterMarker - 1);
 
 		// For validation mode we can terminate immediately
 		if (silent) { return true; }
