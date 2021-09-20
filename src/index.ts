@@ -275,7 +275,6 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 		if (marker.hasOrdinalIndicator === true && options.allowOrdinal !== true) {
 			return false;
 		}
-		const posAfterMarker = marker.bulletChar.length + 2;
 
 		// do not allow subsequent numbers to interrupt paragraphs
 		if (isTerminatingParagraph && marker.start !== 1) {
@@ -285,11 +284,11 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 		// If we're starting a new unordered list right after
 		// a paragraph, first line should not be empty.
 		if (isTerminatingParagraph) {
-			if (state.skipSpaces(posAfterMarker) >= state.eMarks[startLine]) return false;
+			if (state.skipSpaces(marker.posAfterMarker) >= state.eMarks[startLine]) return false;
 		}
 
 		// We should terminate list on style change. Remember first one to compare.
-		const markerCharCode = state.src.charCodeAt(posAfterMarker - 1);
+		const markerCharCode = state.src.charCodeAt(marker.posAfterMarker - 1);
 
 		// For validation mode we can terminate immediately
 		if (silent) { return true; }

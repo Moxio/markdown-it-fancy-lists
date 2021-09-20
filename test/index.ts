@@ -1,10 +1,11 @@
 import * as MarkdownIt from "markdown-it";
+import * as Token from "markdown-it/lib/token";
 import { markdownItFancyListPlugin, MarkdownItFancyListPluginOptions } from "../src/index";
 import { assert } from "chai";
 import { HtmlDiffer } from "@markedjs/html-differ";
 
 
-const assertMarkdownIsConvertedTo = async (expectedHtml: string, markdown: string, pluginOptions?: MarkdownItFancyListPluginOptions) => {
+const assertHTML = async (expectedHtml: string, markdown: string, pluginOptions?: MarkdownItFancyListPluginOptions) => {
 	const markdownConverter = new MarkdownIt("default", {
 		"typographer": true,
 	});
@@ -14,6 +15,22 @@ const assertMarkdownIsConvertedTo = async (expectedHtml: string, markdown: strin
 	const htmlDiffer = new HtmlDiffer();
 	const isEqual = await htmlDiffer.isEqual(actualOutput, expectedHtml);
 	assert.isTrue(isEqual, `Expected:\n${expectedHtml}\n\nActual:\n${actualOutput}`);
+};
+
+const assertTokens = (expectedTokens: Partial<Token>[], markdown: string, pluginOptions?: MarkdownItFancyListPluginOptions) => {
+	const markdownConverter = new MarkdownIt("default", {
+		"typographer": true,
+	});
+	markdownConverter.use(markdownItFancyListPlugin, pluginOptions);
+	const actualTokens = markdownConverter.parse(markdown, {});
+
+	assert.strictEqual(actualTokens.length, expectedTokens.length);
+	expectedTokens.map((expectedToken, i) => {
+		const keys = Object.keys(expectedToken);
+		keys.map((key) => {
+			assert.strictEqual(actualTokens[i][key], expectedToken[key], `Expected ${key} at token ${i}`);
+		});
+	});
 };
 
 
@@ -34,7 +51,7 @@ describe("markdownFancyLists",  () => {
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports lowercase alphabetical numbering", async () => {
@@ -50,7 +67,7 @@ c. baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports offsets for lowercase alphabetical numbering", async () => {
@@ -66,7 +83,7 @@ d. baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports uppercase alphabetical numbering", async () => {
@@ -82,7 +99,7 @@ C) baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports offsets for uppercase alphabetical numbering", async () => {
@@ -98,7 +115,7 @@ D) baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("test supports lowercase roman numbering", async () => {
@@ -114,7 +131,7 @@ iii. baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports offsets for lowercase roman numbering", async () => {
@@ -130,7 +147,7 @@ vi. baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports uppercase roman numbering", async () => {
@@ -146,7 +163,7 @@ III) baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports offsets for uppercase roman numbering", async () => {
@@ -162,7 +179,7 @@ XIV. baz
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("ignores invalid roman numerals as list marker", async () => {
@@ -176,7 +193,7 @@ VVII. baz
 VVI. bar
 VVII. baz</p>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports hash as list marker for subsequent items", async () => {
@@ -192,7 +209,7 @@ VVII. baz</p>
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports hash as list marker for subsequent roman numeric marker", async () => {
@@ -208,7 +225,7 @@ i. foo
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports hash as list marker for subsequent alphanumeric marker", async () => {
@@ -224,7 +241,7 @@ a. foo
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports hash as list marker for initial item", async () => {
@@ -240,7 +257,7 @@ a. foo
   <li>baz</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("allows first numbers to interrupt paragraphs", async () => {
@@ -269,7 +286,7 @@ iii. a plane ticket
   <li>a plane ticket</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("does not allow subsequent numbers to interrupt paragraphs", async () => {
@@ -294,7 +311,7 @@ ii. new shoes
 iii. a coat
 iv. a plane ticket</p>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("supports nested lists", async () => {
@@ -319,7 +336,7 @@ iv. a plane ticket</p>
 </li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("starts a new list when a different type of numbering is used", async () => {
@@ -341,7 +358,7 @@ ii) Second
   <li>Second</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("starts a new list when a sequence of letters is not a valid roman numeral", async () => {
@@ -357,7 +374,7 @@ A) First again
   <li>First again</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("marker is considered to be alphabetical when part of an alphabetical list", async () => {
@@ -386,7 +403,7 @@ ii) First of new list
   <li>First of new list</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("single letter roman numerals other than I are considered alphabetical without context", async () => {
@@ -423,7 +440,7 @@ M) foo
   <li>foo</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	it("requires two spaces after a capital letter and a period", async () => {
@@ -450,7 +467,7 @@ C.  bar
   <li>bar</li>
 </ol>
 `;
-		await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+		await assertHTML(expectedHtml, markdown);
 	});
 
 	describe("support for ordinal indicator", () => {
@@ -465,7 +482,7 @@ C.  bar
 2&#xBA;. bar
 3&#xBA;. baz</p>
 `;
-			await assertMarkdownIsConvertedTo(expectedHtml, markdown);
+			await assertHTML(expectedHtml, markdown);
 		});
 
 		it("supports an ordinal indicator if enabled in options", async () => {
@@ -481,7 +498,7 @@ C.  bar
   <li>baz</li>
 </ol>
 `;
-			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+			await assertHTML(expectedHtml, markdown, {
 				allowOrdinal: true,
 			});
 		});
@@ -499,7 +516,7 @@ IVº. baz
   <li>baz</li>
 </ol>
 `;
-			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+			await assertHTML(expectedHtml, markdown, {
 				allowOrdinal: true,
 			});
 		});
@@ -523,7 +540,7 @@ IVº. baz
   <li>Another first</li>
 </ol>
 `;
-			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+			await assertHTML(expectedHtml, markdown, {
 				allowOrdinal: true,
 			});
 		});
@@ -543,7 +560,77 @@ IVº. baz
   <li>ordinal indicator</li>
 </ol>
 `;
-			await assertMarkdownIsConvertedTo(expectedHtml, markdown, {
+			await assertHTML(expectedHtml, markdown, {
+				allowOrdinal: true,
+			});
+		});
+
+		it("produces correct markup character regression for issue#4", () => {
+			const markdown = `
+### title
+
+a. first item
+#. second item
+
+1) first item
+2) second item
+
+1°. degree sign
+2˚. ring above
+3ᵒ. modifier letter small o
+4º. ordinal indicator
+`;
+			assertTokens([
+				{ type: "heading_open" },
+				{ type: "inline", content: "title" },
+				{ type: "heading_close" },
+				{ type: "ordered_list_open" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "first item" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "second item" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "ordered_list_close" },
+				{ type: "ordered_list_open" },
+				{ type: "list_item_open", markup: ")" },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "first item" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "list_item_open", markup: ")" },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "second item" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "ordered_list_close" },
+				{ type: "ordered_list_open" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "degree sign" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "ring above" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "modifier letter small o" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "list_item_open", markup: "." },
+				{ type: "paragraph_open" },
+				{ type: "inline", content: "ordinal indicator" },
+				{ type: "paragraph_close" },
+				{ type: "list_item_close" },
+				{ type: "ordered_list_close" }
+			], markdown, {
 				allowOrdinal: true,
 			});
 		});
