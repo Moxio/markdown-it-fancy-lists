@@ -289,7 +289,7 @@ iii. a plane ticket
 		await assertHTML(expectedHtml, markdown);
 	});
 
-	it("does not allow subsequent numbers to interrupt paragraphs", async () => {
+	it("allows subsequent numbers to interrupt paragraphs", async () => {
 		const markdown = `
 I need to buy
 b. new shoes
@@ -302,14 +302,19 @@ iii. a coat
 iv. a plane ticket
 `;
 		const expectedHtml = `
-<p>I need to buy
-b. new shoes
-c. a coat
-d. a plane ticket</p>
-<p>I also need to buy
-ii. new shoes
-iii. a coat
-iv. a plane ticket</p>
+<p>I need to buy</p>
+<ol type="a" start="2">
+  <li>new shoes</li>
+  <li>a coat</li>
+  <li>a plane ticket</li>
+</ol>
+<p>I also need to buy</p>
+<ol type="i" start="2">
+  <li>new shoes</li>
+  <li>a coat</li>
+  <li>a plane ticket</li>
+</ol>
+
 `;
 		await assertHTML(expectedHtml, markdown);
 	});
@@ -334,6 +339,59 @@ iv. a plane ticket</p>
   <li>subthree</li>
 </ol>
 </li>
+</ol>
+`;
+		await assertHTML(expectedHtml, markdown);
+	});
+
+	it("supports nested lists with start", async () => {
+		const markdown = `
+c. charlie
+#. delta
+   iv) subfour
+   #) subfive
+   #) subsix
+#. echo
+`;
+		const expectedHtml = `
+<ol type="a" start="3">
+  <li>charlie</li>
+  <li>delta
+    <ol type="i" start="4">
+      <li>subfour</li>
+      <li>subfive</li>
+      <li>subsix</li>
+    </ol>
+  </li>
+  <li>echo</li>
+</ol>
+`;
+		await assertHTML(expectedHtml, markdown);
+	});
+
+	it("supports nested lists with extra newline", async () => {
+		const markdown = `
+c. charlie
+#. delta
+
+   sigma
+   iv) subfour
+   #) subfive
+   #) subsix
+#. echo
+`;
+		const expectedHtml = `
+<ol type="a" start="3">
+  <li><p>charlie</p></li>
+  <li><p>delta</p>
+    <p>sigma</p>
+    <ol type="i" start="4">
+      <li>subfour</li>
+      <li>subfive</li>
+      <li>subsix</li>
+    </ol>
+  </li>
+  <li><p>echo</p></li>
 </ol>
 `;
 		await assertHTML(expectedHtml, markdown);
