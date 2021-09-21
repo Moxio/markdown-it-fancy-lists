@@ -109,9 +109,13 @@ are two small differences with Pandoc's syntax:
 * This plugin does not support list numbers enclosed in parentheses,
   as the Commonmark spec does not support these either for lists
   numbered with Arabic numerals.
-* Pandoc and Commonmark do not agree whether a list is allowed to
-  interrupt a paragraph. It also depends on if that list is nested or not.
-  This plugin always allows a paragraph to be interrupted.
+* Pandoc does not allow any list to interrupt a paragraph. In the
+  spirit of the Commonmark spec (which allows only lists starting
+  with 1 to interrupt a paragraph), this plugins allows lists that
+  start with "A", "a", "I" or "i" (i.e. all 'first numerals') to
+  interrupt a paragraph. The same holds for the "#" generic numbered
+  list item marker.
+  For nested lists, any start number can interrupt a paragraph.
 
 Configuration
 -------------

@@ -276,6 +276,12 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 			return false;
 		}
 
+		// do not allow subsequent numbers to interrupt paragraphs in non-nested lists
+		const isNestedList = state.listIndent !== -1;
+		if (isTerminatingParagraph && marker.start !== 1 && isNestedList === false) {
+			return false;
+		}
+
 		// If we're starting a new unordered list right after
 		// a paragraph, first line should not be empty.
 		if (isTerminatingParagraph) {

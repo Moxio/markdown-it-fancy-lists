@@ -289,7 +289,7 @@ iii. a plane ticket
 		await assertHTML(expectedHtml, markdown);
 	});
 
-	it("allows subsequent numbers to interrupt paragraphs", async () => {
+	it("does not allow subsequent numbers to interrupt paragraphs", async () => {
 		const markdown = `
 I need to buy
 b. new shoes
@@ -302,19 +302,14 @@ iii. a coat
 iv. a plane ticket
 `;
 		const expectedHtml = `
-<p>I need to buy</p>
-<ol type="a" start="2">
-  <li>new shoes</li>
-  <li>a coat</li>
-  <li>a plane ticket</li>
-</ol>
-<p>I also need to buy</p>
-<ol type="i" start="2">
-  <li>new shoes</li>
-  <li>a coat</li>
-  <li>a plane ticket</li>
-</ol>
-
+<p>I need to buy
+b. new shoes
+c. a coat
+d. a plane ticket</p>
+<p>I also need to buy
+ii. new shoes
+iii. a coat
+iv. a plane ticket</p>
 `;
 		await assertHTML(expectedHtml, markdown);
 	});
