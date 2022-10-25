@@ -36,7 +36,7 @@ function parseUnorderedListMarker(state: StateBlock, startLine: number): { type:
 	};
 }
 
-// Search `^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])`, returns next pos after marker on success
+// Search `^(\d{1,9}|[a-z]{1,3}|[A-Z]{1,3}|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])`, returns next pos after marker on success
 // or -1 on fail.
 function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletChar: string; hasOrdinalIndicator: boolean, delimiter: ")" | "."; posAfterMarker: number } | null {
 	const start = state.bMarks[startLine] + state.tShift[startLine];
@@ -49,7 +49,7 @@ function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletC
 
 	const stringContainingNumberAndMarker = state.src.substring(start, Math.min(max, start + 10));
 
-	const match = /^(\d{1,9}|[a-z]|[A-Z]|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])/.exec(stringContainingNumberAndMarker);
+	const match = /^(\d{1,9}|[a-z]{1,3}|[A-Z]{1,3}|[ivxlcdm]+|[IVXLCDM]+|#)([\u00BA\u00B0\u02DA\u1D52]?)([.)])/.exec(stringContainingNumberAndMarker);
 	if (match === null) {
 		return null;
 	}
@@ -121,7 +121,17 @@ const analyzeRoman = (romanNumeralString: string) => {
 	};
 };
 
-function analyseMarker(state: StateBlock, startLine: number, endLine: number, previousMarker: Marker | null): Marker | null {
+const convertAlphaMarkerToOrdinalNumber = (alphaMarker: string): number => {
+	const lastLetterValue = alphaMarker.toLowerCase().charCodeAt(alphaMarker.length - 1) - "a".charCodeAt(0) + 1;
+	if (alphaMarker.length > 1) {
+		const prefixValue = convertAlphaMarkerToOrdinalNumber(alphaMarker.substring(0, alphaMarker.length - 1));
+		return prefixValue * 26 + lastLetterValue;
+	} else {
+		return lastLetterValue;
+	}
+};
+
+function analyseMarker(state: StateBlock, startLine: number, endLine: number, previousMarker: Marker | null, options: MarkdownItFancyListPluginOptions): Marker | null {
 	const orderedListMarker = parseOrderedListMarker(state, startLine);
 	if (orderedListMarker !== null) {
 		const bulletChar = orderedListMarker.bulletChar;
@@ -138,7 +148,7 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 				...orderedListMarker,
 			};
 		} else if (isCharCodeLowercaseAlpha(charCode)) {
-			const isValidAlpha = bulletChar.length === 1;
+			const isValidAlpha = bulletChar.length === 1 || options.allowMultiLetter === true;
 			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && bulletChar === "i"));
 			const { parsedRomanNumber, isValidRoman } = analyzeRoman(bulletChar);
 
@@ -157,13 +167,13 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 					isRoman: false,
 					isAlpha: true,
 					type: "a",
-					start: bulletChar.charCodeAt(0) - "a".charCodeAt(0) + 1,
+					start: convertAlphaMarkerToOrdinalNumber(bulletChar),
 					...orderedListMarker,
 				};
 			}
 			return null;
 		} else if (isCharCodeUppercaseAlpha(charCode)) {
-			const isValidAlpha = bulletChar.length === 1;
+			const isValidAlpha = bulletChar.length === 1 || options.allowMultiLetter === true;
 			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && bulletChar === "I"));
 			const { parsedRomanNumber, isValidRoman } = analyzeRoman(bulletChar);
 
@@ -182,7 +192,7 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 					isRoman: false,
 					isAlpha: true,
 					type: "A",
-					start: bulletChar.charCodeAt(0) - "A".charCodeAt(0) + 1,
+					start: convertAlphaMarkerToOrdinalNumber(bulletChar),
 					...orderedListMarker,
 				};
 			}
@@ -268,7 +278,7 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 			}
 		}
 
-		let marker: Marker | null = analyseMarker(state, startLine, endLine, null);
+		let marker: Marker | null = analyseMarker(state, startLine, endLine, null, options);
 		if (marker === null) {
 			return false;
 		}
@@ -333,7 +343,7 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 
 		let tight = true;
 		while (nextLine < endLine) {
-			const nextMarker = analyseMarker(state, nextLine, endLine, marker);
+			const nextMarker = analyseMarker(state, nextLine, endLine, marker, options);
 			if (nextMarker === null || areMarkersCompatible(marker, nextMarker) === false) {
 				break;
 			}
@@ -479,6 +489,7 @@ const createFancyList = (options: MarkdownItFancyListPluginOptions) => {
 
 export type MarkdownItFancyListPluginOptions = {
 	allowOrdinal?: boolean;
+	allowMultiLetter?: boolean;
 };
 
 export const markdownItFancyListPlugin = (markdownIt: MarkdownIt, options?: MarkdownItFancyListPluginOptions): void => {

@@ -688,4 +688,106 @@ a. first item
 			});
 		});
 	});
+
+	describe("support for multi-letter list markers", () => {
+		it("does not support multi-letter list markers by default", async () => {
+			const markdown = `
+AA) foo
+AB) bar
+AC) baz
+`;
+			const expectedHtml = `
+<p>AA) foo
+AB) bar
+AC) baz</p>
+`;
+			await assertHTML(expectedHtml, markdown);
+		});
+
+		it("supports multi-letter list markers if enabled in options", async () => {
+			const markdown = `
+AA) foo
+AB) bar
+AC) baz
+`;
+			const expectedHtml = `
+<ol type="A" start="27">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+
+		it("supports continuing a single-letter list with multi-letter list markers", async () => {
+			const markdown = `
+Z) foo
+AA) bar
+AB) baz
+`;
+			const expectedHtml = `
+<ol type="A" start="26">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+
+		it("supports lowercase multi-letter list markers", async () => {
+			const markdown = `
+aa) foo
+ab) bar
+ac) baz
+`;
+			const expectedHtml = `
+<ol type="a" start="27">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+
+		it("allows at most 3 characters for multi-letter list markers", async () => {
+			const markdown = `
+AAAA) foo
+AAAB) bar
+AAAC) baz
+`;
+			const expectedHtml = `
+<p>AAAA) foo
+AAAB) bar
+AAAC) baz</p>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+
+		it("does not support mixing uppercase and lowercase letters", async () => {
+			const markdown = `
+Aa) foo
+Ab) bar
+Ac) baz
+`;
+			const expectedHtml = `
+<p>Aa) foo
+Ab) bar
+Ac) baz</p>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+	});
 });
