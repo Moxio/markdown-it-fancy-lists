@@ -149,6 +149,23 @@ Supported configuration options:
 
   Because the ordinal indicator is commonly confused with other characters like the degree symbol, these
   characters are tolerated and considered equivalent to the ordinal indicator.
+* `allowMultiLetter` - Whether to allow multi-letter alphabetic numerals, to number lists beyond 26
+  (default: `false`). If this option is enabled, input like
+  ```markdown
+  AA. foo
+  AB. bar
+  AC. baz
+  ```
+  will be converted to
+  ```html
+  <ol type="A" start="27">
+    <li>foo</li>
+    <li>bar</li>
+    <li>baz</li>
+  </ol>
+  ```
+  Multi-letter alphabetic numerals can consist of at most 3 characters, which should be enough for a
+  typical list.
 
 Versioning
 ----------
