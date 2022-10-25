@@ -789,5 +789,41 @@ Ac) baz</p>
 				allowMultiLetter: true,
 			});
 		});
+
+		it("prefers roman numerals over multi-letter alphabetic numerals", async () => {
+			const markdown = `
+II) foo
+III) bar
+IV) baz
+`;
+			const expectedHtml = `
+<ol type="I" start="2">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
+
+		it("prefers multi-letter alphabetic numerals over roman numerals when already in an alphabetic list", async () => {
+			const markdown = `
+IH) foo
+II) bar
+IJ) baz
+`;
+			const expectedHtml = `
+<ol type="A" start="242">
+  <li>foo</li>
+  <li>bar</li>
+  <li>baz</li>
+</ol>
+`;
+			await assertHTML(expectedHtml, markdown, {
+				allowMultiLetter: true,
+			});
+		});
 	});
 });

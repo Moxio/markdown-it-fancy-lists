@@ -165,7 +165,8 @@ Supported configuration options:
   </ol>
   ```
   Multi-letter alphabetic numerals can consist of at most 3 characters, which should be enough for a
-  typical list.
+  typical list. When a list starts with a numeral that can be both Roman or multi-letter alphabetic,
+  like "II", it is considered to be Roman.
 
 Versioning
 ----------

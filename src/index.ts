@@ -149,7 +149,7 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 			};
 		} else if (isCharCodeLowercaseAlpha(charCode)) {
 			const isValidAlpha = bulletChar.length === 1 || options.allowMultiLetter === true;
-			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && bulletChar === "i"));
+			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && (bulletChar === "i" || bulletChar.length > 1)));
 			const { parsedRomanNumber, isValidRoman } = analyzeRoman(bulletChar);
 
 			if (isValidRoman === true && (isValidAlpha === false || preferRoman === true)) {
@@ -174,7 +174,7 @@ function analyseMarker(state: StateBlock, startLine: number, endLine: number, pr
 			return null;
 		} else if (isCharCodeUppercaseAlpha(charCode)) {
 			const isValidAlpha = bulletChar.length === 1 || options.allowMultiLetter === true;
-			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && bulletChar === "I"));
+			const preferRoman = ((previousMarker !== null && previousMarker.isRoman === true) || ((previousMarker === null || previousMarker.isAlpha === false) && (bulletChar === "I" || bulletChar.length > 1)));
 			const { parsedRomanNumber, isValidRoman } = analyzeRoman(bulletChar);
 
 			if (isValidRoman === true && (isValidAlpha === false || preferRoman === true)) {
