@@ -60,8 +60,8 @@ function parseOrderedListMarker(state: StateBlock, startLine: number): { bulletC
 	let finalPos = start + match[0].length;
 	const finalChar = state.src.charCodeAt(finalPos);
 
-	//  requires once space after marker
-	if (isSpace(finalChar) === false) {
+	//  requires once space after marker or eol
+	if (isSpace(finalChar) === false && finalPos !== max) {
 		return null;
 	}
 

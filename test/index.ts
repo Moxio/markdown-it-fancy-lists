@@ -54,6 +54,41 @@ describe("markdownFancyLists",  () => {
 		await assertHTML(expectedHtml, markdown);
 	});
 
+	it("does not not continue the list item if there is no list item content before the newline", async () => {
+		const markdown = `
+1.
+foo
+
+2.
+bar
+`;
+		const expectedHtml = `
+<ol>
+  <li></li>
+</ol>
+<p>foo</p>
+<ol start="2">
+  <li></li>
+</ol>
+<p>bar</p>
+`;
+		await assertHTML(expectedHtml, markdown);
+	});
+
+	it("requires a space after list marker", async () => {
+		const markdown = `
+1.2 foo
+2.3 bar
+`;
+		const expectedHtml = `
+<p>
+	1.2 foo
+	2.3 bar
+</p>
+`;
+		await assertHTML(expectedHtml, markdown);
+	});
+
 	it("supports lowercase alphabetical numbering", async () => {
 		const markdown = `
 a. foo
