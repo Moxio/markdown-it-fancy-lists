@@ -33,7 +33,7 @@
 		"roman-numerals": "^0.3.2"
 	},
 	"devDependencies": {
-		"@markedjs/html-differ": "^3.0.4",
+		"@markedjs/html-differ": "^5.0.5",
 		"@types/chai": "^4.2.14",
 		"@types/markdown-it": "^13.0.2",
 		"@types/mocha": "^10.0.0",
