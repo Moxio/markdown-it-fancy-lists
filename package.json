@@ -34,11 +34,11 @@
 	},
 	"devDependencies": {
 		"@markedjs/html-differ": "^5.0.5",
-		"@types/chai": "^4.2.14",
+		"@types/chai": "^5.2.3",
 		"@types/markdown-it": "^13.0.2",
 		"@types/mocha": "^10.0.0",
 		"@types/roman-numerals": "^0.3.0",
-		"chai": "^4.2.0",
+		"chai": "^6.2.2",
 		"markdown-it": "^14.0.0",
 		"mocha": "^11.0.0",
 		"ts-node": "^9.1.1",
