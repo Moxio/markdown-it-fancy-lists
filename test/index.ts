@@ -1,5 +1,5 @@
-import * as MarkdownIt from "markdown-it";
-import * as Token from "markdown-it/lib/token";
+import MarkdownIt from "markdown-it";
+import type { Token } from "markdown-it";
 import { markdownItFancyListPlugin, MarkdownItFancyListPluginOptions } from "../src/index";
 import { assert } from "chai";
 import { HtmlDiffer } from "@markedjs/html-differ";

@@ -35,7 +35,7 @@
 	"devDependencies": {
 		"@markedjs/html-differ": "^5.0.5",
 		"@types/chai": "^5.2.3",
-		"@types/markdown-it": "^13.0.2",
+		"@types/markdown-it": "^14.1.2",
 		"@types/mocha": "^10.0.0",
 		"@types/roman-numerals": "^0.3.0",
 		"chai": "^6.2.2",
