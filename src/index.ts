@@ -1,4 +1,5 @@
-import type { StateBlock, Token } from "markdown-it";
+import StateBlock from "markdown-it/lib/rules_block/state_block.mjs";
+import Token from "markdown-it/lib/token.mjs";
 import { toArabic } from "roman-numerals";
 import MarkdownIt from "markdown-it";
 

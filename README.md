@@ -33,16 +33,6 @@ parser.use(markdownItFancyListPlugin);
 parser.render(/* markdown string */);
 ```
 
-CommonJS:
-```javascript
-const MarkdownIt = require('markdown-it');
-const markdownItFancyListPlugin = require("markdown-it-fancy-lists").markdownItFancyListPlugin;
-
-const parser = new MarkdownIt("default");
-parser.use(markdownItFancyListPlugin);
-parser.render(/* markdown string */);
-```
-
 
 Syntax
 ------

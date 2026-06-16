@@ -4,5 +4,6 @@
 # Output directories
 /lib/
 /esm/
+/dist/
 /package-lock.json
 /yarn.lock
