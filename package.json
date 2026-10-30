@@ -43,17 +43,16 @@
 	"devDependencies": {
 		"@markedjs/html-differ": "^5.0.5",
 		"@types/chai": "^5.2.3",
-		"@types/markdown-it": "^14.1.2",
 		"@types/markedjs__html-differ": "^3.0.6",
 		"@types/mocha": "^10.0.0",
 		"@types/roman-numerals": "^0.3.0",
 		"chai": "^6.2.2",
-		"markdown-it": "^14.0.0",
+		"markdown-it": "^15.0.3",
 		"mocha": "^11.0.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^6.0.3"
 	},
 	"peerDependencies": {
-		"markdown-it": "^12.0.3 || ^13.0.1 || ^14.0.0"
+		"markdown-it": "^12.0.3 || ^13.0.1 || ^14.0.0 || ^15.0.0"
 	}
 }
