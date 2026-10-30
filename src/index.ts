@@ -1,7 +1,11 @@
-import StateBlock from "markdown-it/lib/rules_block/state_block.mjs";
-import Token from "markdown-it/lib/token.mjs";
+import type { StateBlock, Token } from "markdown-it";
+import type MarkdownItConstructor from "markdown-it";
 import { toArabic } from "roman-numerals";
-import MarkdownIt from "markdown-it";
+
+// markdown-it v15 exports a callable constructor as default export, whereas
+// @types/markdown-it (for v12-v14) exports a class. Derive the instance type
+// in a way that works with both, so the emitted declarations stay compatible.
+type MarkdownIt = InstanceType<typeof MarkdownItConstructor>;
 
 export type MarkdownItFancyListPluginOptions = {
 	allowOrdinal?: boolean;
